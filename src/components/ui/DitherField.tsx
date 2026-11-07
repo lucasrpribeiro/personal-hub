@@ -6,6 +6,7 @@ import { cn } from "@/lib/utils";
 interface DitherFieldProps {
   className?: string;
   dotSize?: number;
+  interactive?: boolean;
 }
 
 // Matriz Bayer 4x4 clássica de Ordered Dithering
@@ -16,7 +17,10 @@ const BAYER_4X4 = [
   [15, 7, 13, 5],
 ];
 
-export function DitherField({ className, dotSize = 4 }: DitherFieldProps) {
+export function DitherField({
+  className,
+  dotSize = 3,
+}: DitherFieldProps) {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
 
   useEffect(() => {
@@ -31,17 +35,24 @@ export function DitherField({ className, dotSize = 4 }: DitherFieldProps) {
 
     const resize = () => {
       const rect = canvas.getBoundingClientRect();
-      canvas.width = rect.width / dotSize;
-      canvas.height = rect.height / dotSize;
+      const width = Math.max(rect.width, 320);
+      const height = Math.max(rect.height, 180);
+      canvas.width = Math.floor(width / dotSize);
+      canvas.height = Math.floor(height / dotSize);
     };
 
     resize();
     window.addEventListener("resize", resize);
 
     const render = () => {
-      time += 0.03;
+      time += 0.025;
       const w = canvas.width;
       const h = canvas.height;
+
+      if (w <= 0 || h <= 0) {
+        animationId = requestAnimationFrame(render);
+        return;
+      }
 
       const imgData = ctx.createImageData(w, h);
       const data = imgData.data;
@@ -50,27 +61,28 @@ export function DitherField({ className, dotSize = 4 }: DitherFieldProps) {
         for (let x = 0; x < w; x++) {
           const idx = (y * w + x) * 4;
 
-          // Função de onda matemática ondulante
           const nx = x / w - 0.5;
           const ny = y / h - 0.5;
           const dist = Math.sqrt(nx * nx + ny * ny);
 
+          // Função de onda harmônica complexa
           const wave =
-            Math.sin(dist * 12 - time) * 0.5 +
-            Math.sin(nx * 8 + time * 0.5) * 0.25 +
+            Math.sin(dist * 14 - time * 1.5) * 0.4 +
+            Math.cos(nx * 10 + time) * 0.3 +
+            Math.sin(ny * 8 - time * 0.8) * 0.3 +
             0.5;
 
-          // Mapear na matriz de Bayer
           const bayerValue = BAYER_4X4[y % 4][x % 4] / 16;
-          const isWhite = wave > bayerValue;
+          const isPoint = wave > bayerValue;
 
-          if (isWhite) {
-            data[idx] = 200;     // R (prata suave)
+          if (isPoint) {
+            // Ponto prateado / ciano suave
+            data[idx] = 180;     // R
             data[idx + 1] = 210; // G
-            data[idx + 2] = 225; // B
-            data[idx + 3] = 45;  // Alpha sutil para não ofuscar o texto
+            data[idx + 2] = 230; // B
+            data[idx + 3] = 110; // Alpha visível e nítido
           } else {
-            data[idx + 3] = 0;   // Transparente
+            data[idx + 3] = 0;
           }
         }
       }
@@ -91,7 +103,7 @@ export function DitherField({ className, dotSize = 4 }: DitherFieldProps) {
     <canvas
       ref={canvasRef}
       className={cn(
-        "pointer-events-none absolute inset-0 h-full w-full opacity-60 [image-rendering:pixelated]",
+        "pointer-events-none absolute inset-0 h-full w-full [image-rendering:pixelated]",
         className
       )}
     />

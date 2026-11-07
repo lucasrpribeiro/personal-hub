@@ -2,7 +2,9 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import { getAllPosts, getPostBySlug } from "@/lib/blog";
 import { shelfItems } from "@/data/shelf";
-import { Calendar, Clock, ArrowLeft, Tag, BookOpen, Share2 } from "lucide-react";
+import { Calendar, Clock, BookOpen } from "lucide-react";
+import { InteractiveHoverButton } from "@/components/ui/InteractiveHoverButton";
+import { BorderBeam } from "@/components/ui/BorderBeam";
 import type { Metadata } from "next";
 
 interface PostPageProps {
@@ -42,20 +44,17 @@ export default async function BlogPostPage({ params }: PostPageProps) {
     notFound();
   }
 
-  // Verificar se há uma obra da estante relacionada a este review
   const relatedShelfItem = shelfItems.find((item) => item.reviewSlug === post.slug);
 
   return (
     <article className="py-4 space-y-10 max-w-3xl mx-auto">
-      {/* Botão de Retorno */}
+      {/* Botão de Retorno com InteractiveHoverButton */}
       <div>
-        <Link
+        <InteractiveHoverButton
+          text="Voltar para Todos os Artigos"
           href="/blog"
-          className="inline-flex items-center space-x-1.5 font-mono text-xs text-zinc-400 hover:text-cyan-400 transition-colors"
-        >
-          <ArrowLeft className="h-3.5 w-3.5" />
-          <span>Voltar para todos os artigos</span>
-        </Link>
+          variant="white"
+        />
       </div>
 
       {/* Cabeçalho do Post */}
@@ -99,7 +98,7 @@ export default async function BlogPostPage({ params }: PostPageProps) {
 
       {/* Banner de Conexão com a Estante (se for um review) */}
       {relatedShelfItem && (
-        <div className="rounded border border-cyan-500/30 bg-cyan-950/20 p-4 flex items-center justify-between">
+        <div className="relative overflow-hidden rounded border border-cyan-500/30 bg-cyan-950/20 p-4 flex items-center justify-between">
           <div className="flex items-center space-x-3">
             <div className="flex h-8 w-8 items-center justify-center rounded border border-cyan-500/40 bg-cyan-900/40 text-cyan-300">
               <BookOpen className="h-4 w-4" />
@@ -120,6 +119,8 @@ export default async function BlogPostPage({ params }: PostPageProps) {
           >
             Ver na Estante →
           </Link>
+
+          <BorderBeam size={150} duration={8} colorFrom="#38bdf8" colorTo="#ffffff" />
         </div>
       )}
 
@@ -140,13 +141,11 @@ export default async function BlogPostPage({ params }: PostPageProps) {
 
       {/* Rodapé do Post com Navegação */}
       <div className="border-t border-zinc-800 pt-8 mt-16 flex items-center justify-between">
-        <Link
+        <InteractiveHoverButton
+          text="Retornar ao Blog"
           href="/blog"
-          className="inline-flex items-center space-x-1.5 font-mono text-xs text-zinc-400 hover:text-cyan-400 transition-colors"
-        >
-          <ArrowLeft className="h-3.5 w-3.5" />
-          <span>Retornar ao Blog</span>
-        </Link>
+          variant="white"
+        />
 
         <Link
           href="/"

@@ -6,9 +6,11 @@ import { RulerDivider } from "@/components/RulerDivider";
 import { FeaturedPostCard } from "@/components/FeaturedPostCard";
 import { PostCard } from "@/components/PostCard";
 import { ShelfCard } from "@/components/ShelfCard";
+import { InteractiveHoverButton } from "@/components/ui/InteractiveHoverButton";
+import { MorphingText } from "@/components/ui/MorphingText";
 import { getAllPosts } from "@/lib/blog";
 import { shelfItems } from "@/data/shelf";
-import { ArrowRight, Terminal, BookOpen } from "lucide-react";
+import { Terminal, BookOpen } from "lucide-react";
 
 export default function HomePage() {
   const allPosts = getAllPosts();
@@ -18,23 +20,31 @@ export default function HomePage() {
   // Selecionar itens favoritos da estante para a home
   const highlightShelfItems = shelfItems.filter((item) => item.status === "favorito").slice(0, 3);
 
+  const shelfMorphKeywords = [
+    "Ficção Cyberpunk",
+    "Sistemas Distribuídos",
+    "Filmes de Denis Villeneuve",
+    "Séries Distópicas",
+    "RPGs e Imersão",
+  ];
+
   return (
     <div className="space-y-6">
-      {/* 1. HERO / TERMINAL POSITIONING */}
+      {/* 1. HERO COM WARP BACKGROUND, TERMINAL, BORDER BEAM, MORPHING TEXT E INTERACTIVE HOVER BUTTONS */}
       <HeroSection />
 
-      {/* 2. RÉGUA: EXPERIÊNCIAS & CARREIRA */}
+      {/* 2. RÉGUA: EXPERIÊNCIAS & CARREIRA (Com Border Beam na posição ativa) */}
       <RulerDivider tag="01 // EXP" label="Linha do Tempo de Carreira" />
       <CareerTimeline />
 
-      {/* 3. RÉGUA: HABILIDADES & CONCEITOS FRONTEND */}
+      {/* 3. RÉGUA: HABILIDADES & CONCEITOS FRONTEND (Com Dither Field e Border Beam) */}
       <RulerDivider tag="02 // SKILLS" label="Conceitos & Arquitetura Frontend" />
       <TechConcepts />
 
-      {/* 4. RÉGUA: BLOG & ENSAIOS */}
+      {/* 4. RÉGUA: BLOG & ENSAIOS (Com Featured Card + Border Beam + Interactive Hover Button) */}
       <RulerDivider tag="03 // BLOG" label="Caderno Público & Artigos" />
       <section className="space-y-8">
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
           <div>
             <h2 className="text-2xl sm:text-3xl font-bold tracking-tight text-zinc-100 flex items-center space-x-2">
               <Terminal className="h-6 w-6 text-cyan-400" />
@@ -45,16 +55,14 @@ export default function HomePage() {
             </p>
           </div>
 
-          <Link
+          <InteractiveHoverButton
+            text={`Ver Arquivo Completo (${allPosts.length})`}
             href="/blog"
-            className="flex items-center space-x-1.5 font-mono text-xs font-semibold text-cyan-400 hover:text-cyan-300 transition-colors"
-          >
-            <span>Ver arquivo completo ({allPosts.length})</span>
-            <ArrowRight className="h-3.5 w-3.5" />
-          </Link>
+            variant="cyan"
+          />
         </div>
 
-        {/* Post em Destaque */}
+        {/* Post em Destaque com Border Beam */}
         {featuredPost && <FeaturedPostCard post={featuredPost} />}
 
         {/* Posts Recentes */}
@@ -67,27 +75,29 @@ export default function HomePage() {
         )}
       </section>
 
-      {/* 5. RÉGUA: ESTANTE CULTURAL */}
+      {/* 5. RÉGUA: ESTANTE CULTURAL (Com Morphing Text no subtítulo + Interactive Hover Button) */}
       <RulerDivider tag="04 // SHELF" label="Estante Cultural & Referências" />
       <section className="space-y-8">
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
           <div>
             <h2 className="text-2xl sm:text-3xl font-bold tracking-tight text-zinc-100 flex items-center space-x-2">
               <BookOpen className="h-6 w-6 text-cyan-400" />
               <span>A Estante</span>
             </h2>
             <p className="mt-1 text-sm text-zinc-400">
-              Livros, filmes, séries e jogos que moldaram meu pensamento e imaginação.
+              Acervo de{" "}
+              <span className="text-cyan-400 font-semibold">
+                <MorphingText texts={shelfMorphKeywords} interval={3500} />
+              </span>{" "}
+              que moldaram minha visão.
             </p>
           </div>
 
-          <Link
+          <InteractiveHoverButton
+            text={`Explorar Toda a Estante (${shelfItems.length})`}
             href="/estante"
-            className="flex items-center space-x-1.5 font-mono text-xs font-semibold text-cyan-400 hover:text-cyan-300 transition-colors"
-          >
-            <span>Ver toda a estante ({shelfItems.length} obras)</span>
-            <ArrowRight className="h-3.5 w-3.5" />
-          </Link>
+            variant="emerald"
+          />
         </div>
 
         {/* Destaques da Estante */}
