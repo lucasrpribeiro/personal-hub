@@ -1,75 +1,73 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef } from "react";
 
 interface MatrixRainProps {
   enabled?: boolean;
 }
 
-// 3 Camadas de Profundidade (Parallax & Depth of Field)
 interface LayerConfig {
   fontSize: number;
   speed: number;
-  alphaBase: number;
-  colorHead: string;
-  colorBody: string;
-  colorTail: string;
-  dropInterval: number; // Intervalo de atualização para modular velocidade
+  headColor: string;
+  bodyColor: string;
+  tailColor: string;
+  glow: boolean;
 }
 
 const LAYERS: LayerConfig[] = [
-  // Camada 0: Fundo profundo (caracteres pequenos, escuros, lentos)
+  // Camada 0: Fundo profundo (caracteres pequenos, velocidade lenta, tons de chumbo/aço)
   {
-    fontSize: 10,
-    speed: 0.7,
-    alphaBase: 0.18,
-    colorHead: "rgba(203, 213, 225, 0.45)", // slate-300
-    colorBody: "rgba(100, 116, 139, 0.25)", // slate-500
-    colorTail: "rgba(51, 65, 85, 0.12)",   // slate-700
-    dropInterval: 5,
+    fontSize: 11,
+    speed: 0.8,
+    headColor: "rgba(203, 213, 225, 0.7)", // slate-300
+    bodyColor: "rgba(100, 116, 139, 0.4)", // slate-500
+    tailColor: "rgba(51, 65, 85, 0.15)",   // slate-700
+    glow: false,
   },
-  // Camada 1: Plano médio (caracteres médios, tons de prata metálica)
+  // Camada 1: Plano médio (caracteres médios, velocidade média, prata metálica)
   {
-    fontSize: 14,
-    speed: 1.4,
-    alphaBase: 0.4,
-    colorHead: "rgba(241, 245, 249, 0.85)", // slate-100
-    colorBody: "rgba(148, 163, 184, 0.55)", // slate-400
-    colorTail: "rgba(71, 85, 105, 0.25)",  // slate-600
-    dropInterval: 3,
+    fontSize: 15,
+    speed: 1.6,
+    headColor: "#FFFFFF",
+    bodyColor: "rgba(226, 232, 240, 0.75)", // slate-200
+    tailColor: "rgba(100, 116, 139, 0.3)",  // slate-500
+    glow: true,
   },
-  // Camada 2: Primeiro plano (caracteres grandes, brancos brilhantes no topo, esmaecendo)
+  // Camada 2: Primeiro plano (caracteres grandes, rápidos, branco brilhante com brilho prateado)
   {
-    fontSize: 19,
-    speed: 2.4,
-    alphaBase: 0.85,
-    colorHead: "#FFFFFF",                   // Branco puro brilhante
-    colorBody: "rgba(226, 232, 240, 0.85)", // slate-200
-    colorTail: "rgba(100, 116, 139, 0.35)", // slate-500
-    dropInterval: 2,
+    fontSize: 20,
+    speed: 2.6,
+    headColor: "#FFFFFF",
+    bodyColor: "rgba(248, 250, 252, 0.95)", // slate-50
+    tailColor: "rgba(148, 163, 184, 0.45)", // slate-400
+    glow: true,
   },
 ];
 
-// Conjunto de glifos: Katakana, Hex, símbolos técnicos e operadores
+// Glifos universais 100% suportados em qualquer SO (Linux, macOS, Windows) sem tofu box
 const GLYPHS =
-  "0123456789ABCDEFｦｱｳｴｵｶｷｹｺｻｼｽｾｿﾀﾂﾃﾅﾆﾇﾈﾊﾋﾎﾏﾐﾑﾒﾓﾔﾕﾗﾘﾜ{}<>/*+-=~λπΣΩ#$_";
+  "0101100101ABCDEF0123456789XYZKM{}[]<>/\\*+-=~:;λπΣΩ$#%&|";
 
 export function MatrixRain({ enabled = true }: MatrixRainProps) {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
-  const [isActive, setIsActive] = useState(enabled);
-
-  useEffect(() => {
-    setIsActive(enabled);
-  }, [enabled]);
+  const animFrameRef = useRef<number | null>(null);
 
   useEffect(() => {
     const canvas = canvasRef.current;
-    if (!canvas || !isActive) return;
+    if (!canvas) return;
 
-    const ctx = canvas.getContext("2d", { alpha: true });
+    const ctx = canvas.getContext("2d", { alpha: false });
     if (!ctx) return;
 
-    let animationFrameId: number;
+    if (!enabled) {
+      if (animFrameRef.current) cancelAnimationFrame(animFrameRef.current);
+      // Preencher com a cor de fundo zinc-950 quando desligado
+      ctx.fillStyle = "#09090b";
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      return;
+    }
+
     let width = (canvas.width = window.innerWidth);
     let height = (canvas.height = window.innerHeight);
 
@@ -78,25 +76,28 @@ export function MatrixRain({ enabled = true }: MatrixRainProps) {
     canvas.width = width * dpr;
     canvas.height = height * dpr;
     ctx.scale(dpr, dpr);
+    ctx.textBaseline = "top";
 
-    // Estado das gotas para cada camada
+    // Fundo inicial imediato
+    ctx.fillStyle = "#09090b";
+    ctx.fillRect(0, 0, width, height);
+
     interface ColumnDrop {
       y: number;
       char: string;
       length: number;
-      history: { char: string; y: number }[];
     }
 
+    // Inicializar cada camada com gotas já distribuídas pela tela
     const layersData = LAYERS.map((layer) => {
       const columnsCount = Math.floor(width / layer.fontSize);
       const drops: ColumnDrop[] = [];
 
       for (let i = 0; i < columnsCount; i++) {
         drops.push({
-          y: Math.random() * -height, // Começa fora da tela com dispersão
+          y: Math.random() * height, // Já começa preenchido por toda a tela
           char: GLYPHS[Math.floor(Math.random() * GLYPHS.length)],
-          length: Math.floor(Math.random() * 14) + 8, // Comprimento da cauda
-          history: [],
+          length: Math.floor(Math.random() * 16) + 8,
         });
       }
 
@@ -104,33 +105,32 @@ export function MatrixRain({ enabled = true }: MatrixRainProps) {
         ...layer,
         columnsCount,
         drops,
-        step: 0,
       };
     });
 
-    let isDocumentVisible = true;
-    const handleVisibilityChange = () => {
-      isDocumentVisible = !document.hidden;
+    let isVisible = true;
+    const handleVisibility = () => {
+      isVisible = !document.hidden;
     };
-    document.addEventListener("visibilitychange", handleVisibilityChange);
+    document.addEventListener("visibilitychange", handleVisibility);
 
     const handleResize = () => {
-      width = canvas.width = window.innerWidth;
-      height = canvas.height = window.innerHeight;
+      width = window.innerWidth;
+      height = window.innerHeight;
       canvas.width = width * dpr;
       canvas.height = height * dpr;
       ctx.scale(dpr, dpr);
+      ctx.textBaseline = "top";
 
-      // Recalcular colunas
+      // Readequar colunas
       layersData.forEach((layer) => {
         const count = Math.floor(width / layer.fontSize);
         layer.columnsCount = count;
         while (layer.drops.length < count) {
           layer.drops.push({
-            y: Math.random() * -height,
+            y: Math.random() * height,
             char: GLYPHS[Math.floor(Math.random() * GLYPHS.length)],
-            length: Math.floor(Math.random() * 14) + 8,
-            history: [],
+            length: Math.floor(Math.random() * 16) + 8,
           });
         }
       });
@@ -139,95 +139,92 @@ export function MatrixRain({ enabled = true }: MatrixRainProps) {
     window.addEventListener("resize", handleResize);
 
     const render = () => {
-      if (!isDocumentVisible) {
-        animationFrameId = requestAnimationFrame(render);
+      if (!isVisible) {
+        animFrameRef.current = requestAnimationFrame(render);
         return;
       }
 
-      // Fundo translúcido para dar o efeito de rastro
-      ctx.fillStyle = "rgba(9, 9, 11, 0.22)";
+      // Rastro suave em zinc-950 (#09090b)
+      ctx.fillStyle = "rgba(9, 9, 11, 0.16)";
       ctx.fillRect(0, 0, width, height);
 
-      // Renderiza as 3 camadas em ordem: Fundo (0), Meio (1), Frente (2)
-      layersData.forEach((layer, layerIndex) => {
-        layer.step++;
-        ctx.font = `${layer.fontSize}px ui-monospace, SFMono-Regular, Menlo, monospace`;
-
-        const isForeGround = layerIndex === 2;
+      // Renderizar camadas (fundo -> frente)
+      layersData.forEach((layer) => {
+        ctx.font = `${layer.fontSize}px ui-monospace, SFMono-Regular, "Liberation Mono", Menlo, monospace`;
 
         for (let i = 0; i < layer.columnsCount; i++) {
           const drop = layer.drops[i];
           const x = i * layer.fontSize;
-
-          // Desenhar cauda (do mais escuro ao mais claro)
           const trailLength = drop.length;
+
           for (let t = 0; t < trailLength; t++) {
             const charY = drop.y - t * (layer.fontSize * 1.15);
-            if (charY < 0 || charY > height) continue;
+            if (charY < -layer.fontSize || charY > height + layer.fontSize) continue;
 
-            // Gradiente: Cabeça (t=0) mais clara -> Final da cauda mais escura
-            const ratio = t / trailLength; // 0 (topo) a 1 (final)
+            const ratio = t / trailLength; // 0 = cabeça (mais claro), 1 = cauda (mais escuro)
 
             if (t === 0) {
-              // Letra guia (Cabeça da cascata)
-              ctx.fillStyle = layer.colorHead;
-              if (isForeGround) {
-                ctx.shadowColor = "rgba(255, 255, 255, 0.75)";
-                ctx.shadowBlur = 6;
+              // Cabeça branca brilhante
+              ctx.fillStyle = layer.headColor;
+              if (layer.glow) {
+                ctx.shadowColor = "rgba(255, 255, 255, 0.9)";
+                ctx.shadowBlur = 8;
               }
-            } else if (ratio < 0.4) {
-              ctx.fillStyle = layer.colorBody;
+            } else if (ratio < 0.45) {
+              // Meio da cascata: prata metálica
+              ctx.fillStyle = layer.bodyColor;
               ctx.shadowBlur = 0;
             } else {
-              ctx.fillStyle = layer.colorTail;
+              // Cauda: cinza escuro/chumbo
+              ctx.fillStyle = layer.tailColor;
               ctx.shadowBlur = 0;
             }
 
-            // Ocasionalmente trocar o caractere para dar o efeito de decodificação
+            // Alternar caractere ocasionalmente
             const charToDraw =
-              Math.random() > 0.94
+              Math.random() > 0.96
                 ? GLYPHS[Math.floor(Math.random() * GLYPHS.length)]
                 : drop.char;
 
             ctx.fillText(charToDraw, x, charY);
           }
 
-          ctx.shadowBlur = 0; // Reset shadow
+          ctx.shadowBlur = 0;
 
-          // Avançar gota
+          // Descer gota
           drop.y += layer.fontSize * layer.speed * 0.45;
 
-          // Alternar caractere da cabeça
-          if (Math.random() > 0.8) {
+          // Trocar letra da cabeça
+          if (Math.random() > 0.82) {
             drop.char = GLYPHS[Math.floor(Math.random() * GLYPHS.length)];
           }
 
-          // Reset quando a cascata ultrapassa a base
+          // Reiniciar gota quando a cauda sumir abaixo da tela
           if (drop.y - trailLength * layer.fontSize > height) {
-            drop.y = Math.random() * -100;
-            drop.length = Math.floor(Math.random() * 14) + 8;
+            drop.y = Math.random() * -50;
+            drop.length = Math.floor(Math.random() * 16) + 8;
           }
         }
       });
 
-      animationFrameId = requestAnimationFrame(render);
+      animFrameRef.current = requestAnimationFrame(render);
     };
 
     render();
 
     return () => {
-      cancelAnimationFrame(animationFrameId);
+      if (animFrameRef.current) cancelAnimationFrame(animFrameRef.current);
       window.removeEventListener("resize", handleResize);
-      document.removeEventListener("visibilitychange", handleVisibilityChange);
+      document.removeEventListener("visibilitychange", handleVisibility);
     };
-  }, [isActive]);
-
-  if (!isActive) return null;
+  }, [enabled]);
 
   return (
     <canvas
       ref={canvasRef}
-      className="fixed inset-0 pointer-events-none -z-10 h-full w-full opacity-65 transition-opacity duration-700"
+      className={`fixed inset-0 pointer-events-none z-0 h-full w-full transition-opacity duration-500 ${
+        enabled ? "opacity-100" : "opacity-0"
+      }`}
       aria-hidden="true"
     />
   );
