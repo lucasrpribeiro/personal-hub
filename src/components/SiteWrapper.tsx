@@ -5,6 +5,7 @@ import { MatrixRain } from "./MatrixRain";
 import { AppHeader } from "./AppHeader";
 import { AppFooter } from "./AppFooter";
 import { RulerLayout } from "./RulerLayout";
+import { ProgressiveBlur } from "@/components/ui/ProgressiveBlur";
 
 interface SiteWrapperProps {
   children: React.ReactNode;
@@ -18,6 +19,9 @@ export function SiteWrapper({ children }: SiteWrapperProps) {
       {/* Cascata Matrix Prateada 3D */}
       <MatrixRain enabled={matrixEnabled} />
 
+      {/* Progressive Blur superior e inferior */}
+      <ProgressiveBlur direction="top" intensity="md" />
+
       {/* Header Fixo com Réguas e Botão de Alternar Efeito */}
       <AppHeader
         matrixEnabled={matrixEnabled}
@@ -25,7 +29,7 @@ export function SiteWrapper({ children }: SiteWrapperProps) {
       />
 
       {/* Corpo Central Emoldurado por Margens Técnicas */}
-      <main className="flex-1">
+      <main className="flex-1 relative z-10">
         <RulerLayout>{children}</RulerLayout>
       </main>
 
