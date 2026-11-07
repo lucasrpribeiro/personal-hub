@@ -1,36 +1,59 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# personal-hub
 
-## Getting Started
+Hub pessoal integrado de **Lucas Ribeiro** combinando **Portfólio Frontend**, **Blog Editorial (Tech & Pessoal)** e **Estante Cultural (Livros, Filmes, Séries e Jogos)**.
 
-First, run the development server:
+Construído com estética sóbria preto e branco, acentos técnicos (ciano e esmeralda), réguas blueprint de largura total (100vw), margens arquiteturais e cascata de caracteres Matrix prateada em 3D.
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+---
+
+## 🛠️ Stack Tecnológica
+
+- **Framework**: [Next.js 16](https://nextjs.org) (App Router, Turbopack, React 19)
+- **Estilização**: [Tailwind CSS v4](https://tailwindcss.com) + [@tailwindcss/typography](https://github.com/tailwindlabs/tailwindcss-typography)
+- **Animações**: [Motion](https://motion.dev) (Framer Motion)
+- **Efeito Visual**: HTML5 Canvas 2D (`requestAnimationFrame`) com 3 camadas de profundidade (Silver Matrix Rain)
+- **Ícones**: [Lucide React](https://lucide.dev)
+- **Blog Engine**: Markdown nativo com `gray-matter` e `remark`
+
+---
+
+## 📐 Estrutura do Projeto
+
+```
+lks-site/
+├── src/
+│   ├── app/
+│   │   ├── blog/              # Listagem com destaques, filtros e busca
+│   │   ├── blog/[slug]/       # Leitor de artigos em Markdown
+│   │   ├── estante/           # Catálogo cultural (livros, filmes, séries, jogos)
+│   │   ├── globals.css        # Tokens de design e réguas técnicas
+│   │   ├── layout.tsx         # Layout raiz com metadados
+│   │   └── page.tsx           # Homepage (Hero, Timeline, Habilidades, Destaques)
+│   ├── components/            # Componentes visuais e interativos
+│   │   ├── MatrixRain.tsx     # Cascata Matrix prateada 3D
+│   │   ├── RulerDivider.tsx   # Réguas horizontais 100vw
+│   │   ├── RulerLayout.tsx    # Margens verticais contínuas
+│   │   ├── CareerTimeline.tsx # Linha do tempo de carreira
+│   │   ├── TechConcepts.tsx   # Habilidades e conceitos de frontend
+│   │   ├── BlogFilter.tsx     # Filtro e busca de posts
+│   │   └── ShelfFilter.tsx    # Filtro cultural com status e notas
+│   ├── content/blog/          # Artigos em Markdown (.md)
+│   ├── data/                  # Dados estruturados (timeline, shelf, concepts)
+│   └── lib/                   # Utilitários de leitura do servidor
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+---
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## 🚀 Desenvolvimento
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```bash
+# Instalar dependências
+pnpm install
 
-## Learn More
+# Iniciar servidor local
+pnpm dev
 
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+# Build de produção
+pnpm build
+pnpm start
+```
